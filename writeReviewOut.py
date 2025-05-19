@@ -7,6 +7,17 @@ from googleapiclient.discovery import build
 from anthropic import Anthropic
 from pathlib import Path
 import re
+import streamlit as st
+
+OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
+GROK_API_KEY = st.secrets["GROK_API_KEY"]
+ANTHROPIC_API_KEY = st.secrets["ANTROPIC_API_KEY"]
+COINMARKETCAP_API_KEY = st.secrets["COINMARKETCAP_API_KEY"]
+
+SPREADSHEET_ID = st.secrets["SPREADSHEET_ID"]
+SHEET_NAME = st.secrets["SHEET_NAME"]
+FOLDER_ID = st.secrets["FOLDER_ID"]
+
 
 
 SCOPES = [
