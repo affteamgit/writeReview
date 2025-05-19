@@ -8,15 +8,7 @@ from anthropic import Anthropic
 from pathlib import Path
 import re
 
-# CONFIG 
 
-OPENAI_API_KEY      = "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"
-GROK_API_KEY        = "xai-g8UfY8YJJYR2tCFcrctdIgcOjftgAgpsAoj0OV0PsR1sDYIrmUW2bicFSMG5KhB4Ks2LSBHKmOPDqsgg"
-ANTHROPIC_API_KEY   = "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"
-COINMARKETCAP_API_KEY = "35d4b289-10dd-416f-b917-ebd83a3d07ec"
-
-SPREADSHEET_ID = "1ZneRUz90Ne06pr8CCax8vp30tOtPpKJQCw5ikE-uB_0"
-SHEET_NAME     = "TempOutput"
 
 FOLDER_ID = "1v7xKLPKwhmMhWnV2OmpMlTCSLZEYrkPR"
 
