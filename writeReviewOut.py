@@ -3,6 +3,7 @@ import openai
 import requests
 import json
 from google.oauth2.service_account import Credentials
+from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from anthropic import Anthropic
 from pathlib import Path
