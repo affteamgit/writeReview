@@ -11,7 +11,7 @@ import streamlit as st
 
 OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 GROK_API_KEY = st.secrets["GROK_API_KEY"]
-ANTHROPIC_API_KEY = st.secrets["ANTROPIC_API_KEY"]
+ANTHROPIC_API_KEY = st.secrets["ANTHROPIC_API_KEY"]
 COINMARKETCAP_API_KEY = st.secrets["COINMARKETCAP_API_KEY"]
 
 SPREADSHEET_ID = st.secrets["SPREADSHEET_ID"]
