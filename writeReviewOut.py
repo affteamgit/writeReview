@@ -27,8 +27,10 @@ SCOPES = [
 DOCS_DRIVE_SCOPES = ["https://www.googleapis.com/auth/documents", "https://www.googleapis.com/auth/drive"]
 
 def get_service_account_credentials():
-    return service_account.Credentials.from_service_account_file(st.secrets["service_account"],
-    scopes=SCOPES)
+    return service_account.Credentials.from_service_account_info(
+        st.secrets["service_account"],
+        scopes=SCOPES
+    )
 
 # Guidelines
 GPT_GUIDELINES = """
