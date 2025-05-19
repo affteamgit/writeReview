@@ -9,9 +9,6 @@ from pathlib import Path
 import re
 
 
-
-FOLDER_ID = "1v7xKLPKwhmMhWnV2OmpMlTCSLZEYrkPR"
-
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets.readonly",
     "https://www.googleapis.com/auth/documents",
