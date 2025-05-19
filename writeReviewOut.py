@@ -130,7 +130,7 @@ If any BTC values appear, convert them internally to USD before comparing to oth
 def get_selected_casino_data():
     creds = Credentials.from_service_account_info(
     st.secrets["credentials"],
-    scopes=st.secrets["SCOPES"]
+    scopes=st.secrets["SCOPES"])
         
     sheets = build("sheets", "v4", credentials=creds)
     casino = sheets.spreadsheets().values().get(spreadsheetId=SPREADSHEET_ID, range=f"{SHEET_NAME}!B1").execute().get("values", [[""]])[0][0].strip()
