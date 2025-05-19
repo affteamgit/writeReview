@@ -18,11 +18,17 @@ SPREADSHEET_ID = st.secrets["SPREADSHEET_ID"]
 SHEET_NAME = st.secrets["SHEET_NAME"]
 FOLDER_ID = st.secrets["FOLDER_ID"]
 
+SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets.readonly",
+    "https://www.googleapis.com/auth/documents",
+    "https://www.googleapis.com/auth/drive"
+]
+
 DOCS_DRIVE_SCOPES = ["https://www.googleapis.com/auth/documents", "https://www.googleapis.com/auth/drive"]
 
 def get_service_account_credentials():
     return Credentials.from_service_account_file(st.secrets["service_account"],
-    scopes=st.secrets["SCOPES"])
+    scopes=SCOPES)
 
 # Guidelines
 GPT_GUIDELINES = """
@@ -130,7 +136,7 @@ If any BTC values appear, convert them internally to USD before comparing to oth
 def get_selected_casino_data():
     creds = Credentials.from_service_account_info(
     st.secrets["credentials"],
-    scopes=st.secrets["SCOPES"])
+    scopes= SCOPES)
         
     sheets = build("sheets", "v4", credentials=creds)
     casino = sheets.spreadsheets().values().get(spreadsheetId=SPREADSHEET_ID, range=f"{SHEET_NAME}!B1").execute().get("values", [[""]])[0][0].strip()
