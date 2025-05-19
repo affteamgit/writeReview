@@ -27,7 +27,7 @@ SCOPES = [
 DOCS_DRIVE_SCOPES = ["https://www.googleapis.com/auth/documents", "https://www.googleapis.com/auth/drive"]
 
 def get_service_account_credentials():
-    return Credentials.from_service_account_file(st.secrets["service_account"],
+    return service_account.Credentials.from_service_account_file(st.secrets["service_account"],
     scopes=SCOPES)
 
 # Guidelines
