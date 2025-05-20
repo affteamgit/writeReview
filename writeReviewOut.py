@@ -2,6 +2,7 @@ import os
 import openai
 import requests
 import json
+import base64
 from google.oauth2.service_account import Credentials
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
