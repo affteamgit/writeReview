@@ -27,9 +27,16 @@ SCOPES = [
 
 DOCS_DRIVE_SCOPES = ["https://www.googleapis.com/auth/documents", "https://www.googleapis.com/auth/drive"]
 
+
+service_account_info = json.loads(
+    base64.b64decode(st.secrets["service_account"]).decode("utf-8")
+)
+credentials_info = json.loads(
+    base64.b64decode(st.secrets["credentials"]).decode("utf-8")
+
 def get_service_account_credentials():
     return service_account.Credentials.from_service_account_info(
-        st.secrets["service_account"],
+        service_account_info,
         scopes=SCOPES
     )
 
@@ -138,7 +145,7 @@ If any BTC values appear, convert them internally to USD before comparing to oth
 # GET SHEET
 def get_selected_casino_data():
     creds = Credentials.from_service_account_info(
-    st.secrets["credentials"],
+    credentials_info,
     scopes= SCOPES)
         
     sheets = build("sheets", "v4", credentials=creds)
