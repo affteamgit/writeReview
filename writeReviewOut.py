@@ -33,6 +33,7 @@ service_account_info = json.loads(
 )
 credentials_info = json.loads(
     base64.b64decode(st.secrets["credentials"]).decode("utf-8")
+)
 
 def get_service_account_credentials():
     return service_account.Credentials.from_service_account_info(
