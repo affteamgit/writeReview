@@ -291,8 +291,8 @@ def create_google_doc_in_folder(docs_service, drive_service, folder_id, doc_titl
 
 # MAIN
 def app():
-    st.title("Casino Review Generator")
-    st.markdown("Generate a Google Doc review of the selected casino.")
+    st.title("Casino Review Writer")
+    st.markdown("Write a review of the selected casino and output to Google Doc.")
 
     if st.button("Generate Review"):
         with st.spinner("Working on it... this might take a minute."):
