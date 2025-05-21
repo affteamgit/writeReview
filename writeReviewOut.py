@@ -290,31 +290,69 @@ def create_google_doc_in_folder(docs_service, drive_service, folder_id, doc_titl
     print(f"✅ Review Google Doc created: https://docs.google.com/document/d/{doc_id}")
 
 # MAIN
-def main():
-    user_creds = get_service_account_credentials()
-    docs_service = build("docs", "v1", credentials=user_creds)
-    drive_service = build("drive", "v3", credentials=user_creds)
+def app():
+    st.title("Casino Review Generator")
+    st.markdown("Generate a full Google Doc review of the selected casino.")
 
-    price = requests.get("https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest", headers={"Accepts": "application/json", "X-CMC_PRO_API_KEY": COINMARKETCAP_API_KEY}, params={"symbol": "BTC", "convert": "USD"}).json().get("data", {}).get("BTC", {}).get("quote", {}).get("USD", {}).get("price")
-    btc_str = f"1 BTC = ${price:,.2f}" if price else "[BTC price unavailable]"
+    if st.button("Generate Review"):
+        with st.spinner("Working on it... this might take a minute or two."):
+            try:
+                user_creds = get_service_account_credentials()
+                docs_service = build("docs", "v1", credentials=user_creds)
+                drive_service = build("drive", "v3", credentials=user_creds)
 
-    casino, secs = get_selected_casino_data()
-    ai_map = {
-        "General": (CLAUDE_GUIDELINES, STRUCTURE_CLAUDE, call_claude),
-        "Payments": (CLAUDE_GUIDELINES, STRUCTURE_CLAUDE, call_claude),
-        "Games": (CLAUDE_GUIDELINES, STRUCTURE_CLAUDE, call_claude),
-        "Responsible Gambling": (GROK_GUIDELINES, STRUCTURE_GROK, call_grok),
-    }
+                price = requests.get(
+                    "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
+                    headers={"Accepts": "application/json", "X-CMC_PRO_API_KEY": COINMARKETCAP_API_KEY},
+                    params={"symbol": "BTC", "convert": "USD"}
+                ).json().get("data", {}).get("BTC", {}).get("quote", {}).get("USD", {}).get("price")
 
-    out = [f"{casino} review\n"]
-    for sec, content in secs.items():
-        guidelines, struct_map, fn = ai_map[sec]
-        structure = struct_map.get(sec, "No structure defined")
-        prompt = PROMPT_TEMPLATE.format(casino=casino, section=sec, guidelines=guidelines, structure=structure, main=content["main"], top=content["top"], sim=content["sim"], btc_value=btc_str)
-        review = fn(prompt)
-        out.append(f"{sec}\n{review}\n")
+                btc_str = f"1 BTC = ${price:,.2f}" if price else "[BTC price unavailable]"
+                casino, secs = get_selected_casino_data()
 
-    create_google_doc_in_folder(docs_service, drive_service, FOLDER_ID, f"{casino} Review", "\n".join(out))
+                ai_map = {
+                    "General": (CLAUDE_GUIDELINES, STRUCTURE_CLAUDE, call_claude),
+                    "Payments": (CLAUDE_GUIDELINES, STRUCTURE_CLAUDE, call_claude),
+                    "Games": (CLAUDE_GUIDELINES, STRUCTURE_CLAUDE, call_claude),
+                    "Responsible Gambling": (GROK_GUIDELINES, STRUCTURE_GROK, call_grok),
+                }
+
+                out = [f"{casino} review\n"]
+                for sec, content in secs.items():
+                    guidelines, struct_map, fn = ai_map[sec]
+                    structure = struct_map.get(sec, "No structure defined")
+                    prompt = PROMPT_TEMPLATE.format(
+                        casino=casino,
+                        section=sec,
+                        guidelines=guidelines,
+                        structure=structure,
+                        main=content["main"],
+                        top=content["top"],
+                        sim=content["sim"],
+                        btc_value=btc_str
+                    )
+                    review = fn(prompt)
+                    out.append(f"{sec}\n{review}\n")
+
+                doc_title = f"{casino} Review"
+                doc_id = docs_service.documents().create(body={"title": doc_title}).execute()["documentId"]
+                insert_parsed_text_with_formatting(docs_service, doc_id, "\n".join(out))
+
+                file = drive_service.files().get(fileId=doc_id, fields="parents").execute()
+                previous_parents = ",".join(file.get('parents', []))
+                drive_service.files().update(
+                    fileId=doc_id,
+                    addParents=FOLDER_ID,
+                    removeParents=previous_parents,
+                    fields="id, parents"
+                ).execute()
+
+                st.success("✅ Review successfully generated and saved to Google Docs!")
+                st.markdown(f"📄 [Click here to view](https://docs.google.com/document/d/{doc_id})")
+                st.balloons()
+
+            except Exception as e:
+                st.error(f"❌ Something went wrong: {e}")
 
 if __name__ == "__main__":
-    main()
+    app()
