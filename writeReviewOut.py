@@ -38,7 +38,7 @@ credentials_info = json.loads(
 
 def get_service_account_credentials():
     return service_account.Credentials.from_service_account_info(
-        service_account_info,
+        st.secrets["service_account"],
         scopes=SCOPES
     )
 
@@ -147,7 +147,7 @@ If any BTC values appear, convert them internally to USD before comparing to oth
 # GET SHEET
 def get_selected_casino_data():
     creds = Credentials.from_service_account_info(
-    credentials_info,
+    st.secrets["service_account"],
     scopes= SCOPES)
         
     sheets = build("sheets", "v4", credentials=creds)
