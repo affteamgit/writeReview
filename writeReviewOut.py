@@ -290,12 +290,18 @@ def create_google_doc_in_folder(docs_service, drive_service, folder_id, doc_titl
     print(f"✅ Review Google Doc created: https://docs.google.com/document/d/{doc_id}")
 
 # MAIN
-def app():
-    st.title("Casino Review Writer")
-    st.markdown("Write a review of the selected casino and output to Google Doc.")
+def find_existing_doc(drive_service, folder_id, title):
+    query = f"name='{title}' and '{folder_id}' in parents and trashed=false"
+    results = drive_service.files().list(q=query, fields="files(id, name)").execute()
+    files = results.get("files", [])
+    return files[0]["id"] if files else None
 
-    if st.button("Generate Review"):
-        with st.spinner("Working on it... this might take a minute."):
+def app():
+    st.title("🎲 Casino Review Generator")
+    st.markdown("Generate a full Google Doc review of the selected casino.")
+
+    if st.button("📝 Generate Review Now"):
+        with st.spinner("Working on it... this might take a minute or two."):
             try:
                 user_creds = get_service_account_credentials()
                 docs_service = build("docs", "v1", credentials=user_creds)
@@ -335,6 +341,12 @@ def app():
                     out.append(f"{sec}\n{review}\n")
 
                 doc_title = f"{casino} Review"
+                existing_doc_id = find_existing_doc(drive_service, FOLDER_ID, doc_title)
+
+                if existing_doc_id:
+                    # Delete the old document
+                    drive_service.files().delete(fileId=existing_doc_id).execute()
+
                 doc_id = docs_service.documents().create(body={"title": doc_title}).execute()["documentId"]
                 insert_parsed_text_with_formatting(docs_service, doc_id, "\n".join(out))
 
@@ -348,7 +360,7 @@ def app():
                 ).execute()
 
                 st.success("✅ Review successfully generated and saved to Google Docs!")
-                st.markdown(f"📄 [Click here to view](https://docs.google.com/document/d/{doc_id})")
+                st.markdown(f"📄 [Click here to view it](https://docs.google.com/document/d/{doc_id})")
                 st.balloons()
 
             except Exception as e:
@@ -356,3 +368,4 @@ def app():
 
 if __name__ == "__main__":
     app()
+
