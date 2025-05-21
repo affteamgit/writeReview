@@ -2,7 +2,6 @@ import os
 import openai
 import requests
 import json
-import base64
 from google.oauth2.service_account import Credentials
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -28,13 +27,6 @@ SCOPES = [
 
 DOCS_DRIVE_SCOPES = ["https://www.googleapis.com/auth/documents", "https://www.googleapis.com/auth/drive"]
 
-
-service_account_info = json.loads(
-    base64.b64decode(st.secrets["service_account"]).decode("utf-8")
-)
-credentials_info = json.loads(
-    base64.b64decode(st.secrets["credentials"]).decode("utf-8")
-)
 
 def get_service_account_credentials():
     return service_account.Credentials.from_service_account_info(
