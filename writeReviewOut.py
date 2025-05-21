@@ -292,10 +292,10 @@ def create_google_doc_in_folder(docs_service, drive_service, folder_id, doc_titl
 # MAIN
 def app():
     st.title("Casino Review Generator")
-    st.markdown("Generate a full Google Doc review of the selected casino.")
+    st.markdown("Generate a Google Doc review of the selected casino.")
 
     if st.button("Generate Review"):
-        with st.spinner("Working on it... this might take a minute or two."):
+        with st.spinner("Working on it... this might take a minute."):
             try:
                 user_creds = get_service_account_credentials()
                 docs_service = build("docs", "v1", credentials=user_creds)
