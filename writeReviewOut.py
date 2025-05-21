@@ -297,11 +297,11 @@ def find_existing_doc(drive_service, folder_id, title):
     return files[0]["id"] if files else None
 
 def app():
-    st.title("🎲 Casino Review Generator")
-    st.markdown("Generate a full Google Doc review of the selected casino.")
+    st.title("🎲 Casino Review Writer")
+    st.markdown("Writes a review of the selected casino and uploads to Google Doc.")
 
-    if st.button("📝 Generate Review Now"):
-        with st.spinner("Working on it... this might take a minute or two."):
+    if st.button("Generate Review"):
+        with st.spinner("Working on it... this might take a minute."):
             try:
                 user_creds = get_service_account_credentials()
                 docs_service = build("docs", "v1", credentials=user_creds)
@@ -359,8 +359,8 @@ def app():
                     fields="id, parents"
                 ).execute()
 
-                st.success("✅ Review successfully generated and saved to Google Docs!")
-                st.markdown(f"📄 [Click here to view it](https://docs.google.com/document/d/{doc_id})")
+                st.success("✅ Review successfully written and saved to Google Drive!")
+                st.markdown(f"[Click here to view](https://docs.google.com/document/d/{doc_id})")
                 st.balloons()
 
             except Exception as e:
