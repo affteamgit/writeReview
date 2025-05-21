@@ -297,34 +297,8 @@ def find_existing_doc(drive_service, folder_id, title):
     return files[0]["id"] if files else None
 
 def app():
-    st.set_page_config(page_title="Casino Review Generator", page_icon="🎰", layout="centered")
-    
-    st.markdown("""
-        <style>
-            .main {
-                background-color: #f0f2f6;
-                padding: 2rem;
-                border-radius: 10px;
-                box-shadow: 0 0 15px rgba(0,0,0,0.1);
-            }
-            .stButton>button {
-                background-color: #e50914;
-                color: white;
-                font-weight: bold;
-                border-radius: 8px;
-                height: 3em;
-                width: 100%;
-                margin-top: 1em;
-            }
-            .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
-                color: #e50914;
-            }
-        </style>
-    """, unsafe_allow_html=True)
-
-    st.image("https://cdn-icons-png.flaticon.com/512/1183/1183438.png", width=80)
     st.title("🎲 Casino Review Writer")
-    st.markdown("<div class='main'>Write a review of the selected casino and save to Google Drive.</div>", unsafe_allow_html=True)
+    st.markdown("Write a review of the selected casino to GoogleDrive.")
 
     if st.button("Generate Review Now"):
         with st.spinner("Working on it... this might take a minute."):
