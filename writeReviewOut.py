@@ -63,27 +63,34 @@ def write_review_link_to_sheet(link):
 def get_selected_casino_data(casino_name):
     creds = get_service_account_credentials()
     sheets = build("sheets", "v4", credentials=creds)
-    rows = sheets.spreadsheets().values().get(spreadsheetId=SPREADSHEET_ID, range=f"{SHEET_NAME}!B2:O").execute().get("values", [])
+    rows = sheets.spreadsheets().values().get(
+        spreadsheetId=SPREADSHEET_ID,
+        range=f"{SHEET_NAME}!B2:O"
+    ).execute().get("values", [])
+
+    if not rows or not rows[0] or rows[0][0].strip() != casino_name:
+        raise ValueError(f"Casino '{casino_name}' not found in first data row")
+
+    row = rows[0]  # Use the first data row (B2:O2)
     sections = {
         "General": (2, 3, 4),
         "Payments": (5, 6, 7),
         "Games": (8, 9, 10),
         "Responsible Gambling": (11, 12, 13),
     }
-    for row in rows:
-        if row and row[0].strip() == casino_name:
-            data = {}
-            for sec, (mi, ti, si) in sections.items():
-                main = row[mi] if len(row) > mi else ""
-                top = row[ti] if len(row) > ti else ""
-                sim = row[si] if len(row) > si else ""
-                data[sec] = {
-                    "main": main or "[No data provided]",
-                    "top": top or "[No top comparison available]",
-                    "sim": sim or "[No similar comparison available]"
-                }
-            return casino_name, data
-    raise ValueError(f"Casino '{casino_name}' not found in sheet")
+
+    data = {}
+    for sec, (mi, ti, si) in sections.items():
+        main = row[mi] if len(row) > mi else ""
+        top = row[ti] if len(row) > ti else ""
+        sim = row[si] if len(row) > si else ""
+        data[sec] = {
+            "main": main or "[No data provided]",
+            "top": top or "[No top comparison available]",
+            "sim": sim or "[No similar comparison available]"
+        }
+
+    return casino_name, data
 
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
 anthropic = Anthropic(api_key=ANTHROPIC_API_KEY)
