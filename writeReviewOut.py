@@ -64,14 +64,12 @@ def get_selected_casino_data(casino_name):
     creds = get_service_account_credentials()
     sheets = build("sheets", "v4", credentials=creds)
     row = sheets.spreadsheets().values().get(spreadsheetId=SPREADSHEET_ID, range=f"{SHEET_NAME}!B2:O2").execute().get("values", [[]])[0]
-    
     sections = {
         "General": (2, 3, 4),
         "Payments": (5, 6, 7),
         "Games": (8, 9, 10),
         "Responsible Gambling": (11, 12, 13),
     }
-
     data = {}
     for sec, (mi, ti, si) in sections.items():
         main = row[mi] if len(row) > mi else ""
@@ -82,7 +80,6 @@ def get_selected_casino_data(casino_name):
             "top": top or "[No top comparison available]",
             "sim": sim or "[No similar comparison available]"
         }
-
     return casino_name, data
 
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
@@ -107,7 +104,70 @@ def find_existing_doc(drive_service, folder_id, title):
     return files[0]["id"] if files else None
 
 def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
-    docs_service.documents().batchUpdate(documentId=doc_id, body={"requests": [{"insertText": {"location": {"index": 1}, "text": review_text}}]}).execute()
+    plain_text = ""
+    formatting_requests = []
+    cursor = 1
+    pattern = r'(\*\*(.*?)\*\*|\[([^\]]+?)\]\((https?://[^\)]+)\))'
+    last_end = 0
+
+    for match in re.finditer(pattern, review_text):
+        start, end = match.span()
+        before_text = review_text[last_end:start]
+        plain_text += before_text
+        cursor_start = cursor + len(before_text)
+
+        if match.group(2):
+            bold_text = match.group(2)
+            plain_text += bold_text
+            formatting_requests.append({
+                "updateTextStyle": {
+                    "range": {"startIndex": cursor_start, "endIndex": cursor_start + len(bold_text)},
+                    "textStyle": {"bold": True},
+                    "fields": "bold"
+                }
+            })
+            cursor += len(before_text) + len(bold_text)
+
+        elif match.group(3) and match.group(4):
+            link_text = match.group(3)
+            url = match.group(4)
+            plain_text += link_text
+            formatting_requests.append({
+                "updateTextStyle": {
+                    "range": {"startIndex": cursor_start, "endIndex": cursor_start + len(link_text)},
+                    "textStyle": {"link": {"url": url}},
+                    "fields": "link"
+                }
+            })
+            cursor += len(before_text) + len(link_text)
+
+        last_end = end
+
+    remaining_text = review_text[last_end:]
+    plain_text += remaining_text
+
+    docs_service.documents().batchUpdate(
+        documentId=doc_id,
+        body={"requests": [{"insertText": {"location": {"index": 1}, "text": plain_text}}]}
+    ).execute()
+
+    title_line = plain_text.split('\n', 1)[0]
+    title_start = 1
+    title_end = title_start + len(title_line)
+
+    formatting_requests.insert(0, {
+        "updateParagraphStyle": {
+            "range": {"startIndex": title_start, "endIndex": title_end},
+            "paragraphStyle": {"namedStyleType": "TITLE"},
+            "fields": "namedStyleType"
+        }
+    })
+
+    if formatting_requests:
+        docs_service.documents().batchUpdate(
+            documentId=doc_id,
+            body={"requests": formatting_requests}
+        ).execute()
 
 def create_google_doc_in_folder(docs_service, drive_service, folder_id, doc_title, review_text):
     doc_id = docs_service.documents().create(body={"title": doc_title}).execute()["documentId"]
