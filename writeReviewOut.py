@@ -119,7 +119,7 @@ def create_google_doc_in_folder(docs_service, drive_service, folder_id, doc_titl
 
 def main():
     st.set_page_config(page_title="Review Generator", layout="centered", initial_sidebar_state="collapsed")
-    st.markdown("## Review is being written!")
+    st.markdown("## Review is being written! Please wait...")
 
     try:
         user_creds = get_service_account_credentials()
@@ -172,8 +172,10 @@ def main():
         doc_url = f"https://docs.google.com/document/d/{doc_id}"
         write_review_link_to_sheet(doc_url)
 
+        st.success("Review complete! Check back in the sheet :)")
+
     except Exception as e:
-        print("Error:", e)
+        st.error(f"❌ An error occurred: {e}")
 
 if __name__ == "__main__":
     main()
