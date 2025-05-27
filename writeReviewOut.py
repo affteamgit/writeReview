@@ -95,7 +95,7 @@ def call_grok(prompt):
     return j.get("choices", [{}])[0].get("message", {}).get("content", "[Grok failed]").strip()
 
 def call_claude(prompt):
-    return anthropic.messages.create(model="claude-4-sonnet", max_tokens=800, temperature=0.5, messages=[{"role": "user", "content": prompt}]).content[0].text.strip()
+    return anthropic.messages.create(model="claude-sonnet-4-20250514", max_tokens=800, temperature=0.5, messages=[{"role": "user", "content": prompt}]).content[0].text.strip()
 
 def find_existing_doc(drive_service, folder_id, title):
     query = f"name='{title}' and '{folder_id}' in parents and trashed=false"
