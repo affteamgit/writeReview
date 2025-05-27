@@ -220,11 +220,34 @@ def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
             
             # Check for bullet points in Responsible Gambling section
             elif in_responsible_gambling and paragraph_text:
-                # Look for lines that start with bullet point indicators
+                # Look for lines that start with bullet point indicators for actual tools/features
+                # Exclude sentences that are clearly commentary or descriptions
+                is_bullet_point = False
+                
+                # Check if it's a proper bullet point (short, tool-like content)
                 if (paragraph_text.startswith('•') or 
                     paragraph_text.startswith('-') or 
                     paragraph_text.startswith('*') or
-                    re.match(r'^\d+\.', paragraph_text.strip())):  # numbered lists
+                    re.match(r'^\d+\.', paragraph_text.strip())):
+                    
+                    # Additional checks to ensure it's actually a tool/feature, not commentary
+                    cleaned_for_check = re.sub(r'^[•\-\*\d\.\s]+', '', paragraph_text).strip()
+                    
+                    # Exclude if it contains commentary phrases or is too long/descriptive
+                    commentary_indicators = [
+                        'this is', 'this ensures', 'ensuring', 'experience',
+                        'above average', 'below average', 'comprehensive',
+                        'however', 'overall', 'in conclusion', 'additionally',
+                        'furthermore', 'moreover', 'therefore', 'thus'
+                    ]
+                    
+                    # Check if it's likely a tool name (short and doesn't contain commentary)
+                    is_commentary = any(indicator in cleaned_for_check.lower() for indicator in commentary_indicators)
+                    is_too_long = len(cleaned_for_check.split()) > 8  # Tools are usually short phrases
+                    
+                    is_bullet_point = not is_commentary and not is_too_long
+                
+                if is_bullet_point:
                     
                     start_index = element.get('startIndex')
                     end_index = element.get('endIndex')
