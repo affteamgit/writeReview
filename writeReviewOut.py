@@ -7,6 +7,7 @@ from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from anthropic import Anthropic
 from pathlib import Path
+
 import re
 
 # CONFIG 
@@ -23,47 +24,53 @@ FOLDER_ID = st.secrets["FOLDER_ID"]
 GUIDELINES_FOLDER_ID = st.secrets["GUIDELINES_FOLDER_ID"]
 
 SCOPES = [
-    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/spreadsheets.readonly",
     "https://www.googleapis.com/auth/documents",
     "https://www.googleapis.com/auth/drive"
 ]
+
+DOCS_DRIVE_SCOPES = ["https://www.googleapis.com/auth/documents", "https://www.googleapis.com/auth/drive"]
 
 def get_service_account_credentials():
     return Credentials.from_service_account_info(st.secrets["service_account"], scopes=SCOPES)
 
 def get_file_content_from_drive(drive_service, folder_id, filename):
+    """Get content of a file from Google Drive folder."""
     try:
+        # Search for the file in the specified folder
         query = f"name = '{filename}' and '{folder_id}' in parents and trashed = false"
         results = drive_service.files().list(q=query, spaces='drive', fields='files(id, name, mimeType)').execute()
         files = results.get('files', [])
+        
         if not files:
             raise Exception(f"File {filename} not found in folder")
+            
         file_id = files[0]['id']
         mime_type = files[0]['mimeType']
+        
+        # Check if it's a Google Docs file
         if mime_type in ['application/vnd.google-apps.document', 'application/vnd.google-apps.spreadsheet']:
-            content = drive_service.files().export(fileId=file_id, mimeType='text/plain').execute()
+            # Export as plain text
+            content = drive_service.files().export(
+                fileId=file_id,
+                mimeType='text/plain'
+            ).execute()
             return content.decode('utf-8')
         else:
+            # Download regular file
             content = drive_service.files().get_media(fileId=file_id).execute()
             return content.decode('utf-8')
+            
     except Exception as e:
+        print(f"Error reading file {filename}: {str(e)}")
         return None
 
-def get_selected_casino():
+# GET SHEET
+def get_selected_casino_data():
     creds = get_service_account_credentials()
     sheets = build("sheets", "v4", credentials=creds)
-    return sheets.spreadsheets().values().get(spreadsheetId=SPREADSHEET_ID, range=f"{SHEET_NAME}!B1").execute().get("values", [[""]])[0][0].strip()
-
-def write_review_link_to_sheet(link):
-    creds = get_service_account_credentials()
-    sheets = build("sheets", "v4", credentials=creds)
-    body = {"values": [[link]]}
-    sheets.spreadsheets().values().update(spreadsheetId=SPREADSHEET_ID, range=f"{SHEET_NAME}!B7", valueInputOption="RAW", body=body).execute()
-
-def get_selected_casino_data(casino_name):
-    creds = get_service_account_credentials()
-    sheets = build("sheets", "v4", credentials=creds)
-    row = sheets.spreadsheets().values().get(spreadsheetId=SPREADSHEET_ID, range=f"{SHEET_NAME}!B2:O2").execute().get("values", [[]])[0]
+    casino = sheets.spreadsheets().values().get(spreadsheetId=SPREADSHEET_ID, range=f"{SHEET_NAME}!B1").execute().get("values", [[""]])[0][0].strip()
+    rows = sheets.spreadsheets().values().get(spreadsheetId=SPREADSHEET_ID, range=f"{SHEET_NAME}!B2:O").execute().get("values", [])
     sections = {
         "General": (2, 3, 4),
         "Payments": (5, 6, 7),
@@ -72,16 +79,13 @@ def get_selected_casino_data(casino_name):
     }
     data = {}
     for sec, (mi, ti, si) in sections.items():
-        main = row[mi] if len(row) > mi else ""
-        top = row[ti] if len(row) > ti else ""
-        sim = row[si] if len(row) > si else ""
-        data[sec] = {
-            "main": main or "[No data provided]",
-            "top": top or "[No top comparison available]",
-            "sim": sim or "[No similar comparison available]"
-        }
-    return casino_name, data
+        main = "\n".join(r[mi] for r in rows if len(r) > mi and r[mi].strip())
+        top = "\n".join(r[ti] for r in rows if len(r) > ti and r[ti].strip())
+        sim = "\n".join(r[si] for r in rows if len(r) > si and r[si].strip())
+        data[sec] = {"main": main or "[No data provided]", "top": top or "[No top comparison available]", "sim": sim or "[No similar comparison available]"}
+    return casino, data
 
+# AI CLIENTS
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
 anthropic = Anthropic(api_key=ANTHROPIC_API_KEY)
 
@@ -95,14 +99,21 @@ def call_grok(prompt):
     return j.get("choices", [{}])[0].get("message", {}).get("content", "[Grok failed]").strip()
 
 def call_claude(prompt):
-    return anthropic.messages.create(model="claude-sonnet-4-20250514", max_tokens=800, temperature=0.5, messages=[{"role": "user", "content": prompt}]).content[0].text.strip()
+    return anthropic.messages.create(model="claude-3-7-sonnet-20250219", max_tokens=800, temperature=0.5, messages=[{"role": "user", "content": prompt}]).content[0].text.strip()
 
-def find_existing_doc(drive_service, folder_id, title):
-    query = f"name='{title}' and '{folder_id}' in parents and trashed=false"
-    results = drive_service.files().list(q=query, fields="files(id, name)").execute()
-    files = results.get("files", [])
-    return files[0]["id"] if files else None
+def write_review_link_to_sheet(link):
+    """Write the review link to cell B7 in the spreadsheet."""
+    creds = get_service_account_credentials()
+    sheets = build("sheets", "v4", credentials=creds)
+    body = {"values": [[link]]}
+    sheets.spreadsheets().values().update(
+        spreadsheetId=SPREADSHEET_ID, 
+        range=f"{SHEET_NAME}!B7", 
+        valueInputOption="RAW", 
+        body=body
+    ).execute()
 
+# FORMATTED INSERTION (CLEAN)
 def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
     # Parse the text into clean text and extract formatting positions
     plain_text = ""
@@ -205,6 +216,7 @@ def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
             body={"requests": header_requests}
         ).execute()
 
+# CREATE DOC + FORMATTING
 def create_google_doc_in_folder(docs_service, drive_service, folder_id, doc_title, review_text):
     doc_id = docs_service.documents().create(body={"title": doc_title}).execute()["documentId"]
     insert_parsed_text_with_formatting(docs_service, doc_id, review_text)
@@ -214,9 +226,16 @@ def create_google_doc_in_folder(docs_service, drive_service, folder_id, doc_titl
     drive_service.files().update(fileId=doc_id, addParents=folder_id, removeParents=previous_parents, fields="id, parents").execute()
     return doc_id
 
+def find_existing_doc(drive_service, folder_id, title):
+    query = f"name='{title}' and '{folder_id}' in parents and trashed=false"
+    results = drive_service.files().list(q=query, fields="files(id, name)").execute()
+    files = results.get("files", [])
+    return files[0]["id"] if files else None
+
+# MAIN
 def main():
     st.set_page_config(page_title="Review Generator", layout="centered", initial_sidebar_state="collapsed")
-    st.markdown("## Review is being written! Please wait...")
+    st.markdown("## Writing review, please wait...")
 
     try:
         user_creds = get_service_account_credentials()
@@ -226,9 +245,9 @@ def main():
         price = requests.get("https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest", headers={"Accepts": "application/json", "X-CMC_PRO_API_KEY": COINMARKETCAP_API_KEY}, params={"symbol": "BTC", "convert": "USD"}).json().get("data", {}).get("BTC", {}).get("quote", {}).get("USD", {}).get("price")
         btc_str = f"1 BTC = ${price:,.2f}" if price else "[BTC price unavailable]"
 
-        casino = get_selected_casino()
-        casino, secs = get_selected_casino_data(casino)
-
+        casino, secs = get_selected_casino_data()
+        
+        # Define section configurations
         section_configs = {
             "General": ("BaseGuidelinesClaude", "StructureTemplateGeneral", call_claude),
             "Payments": ("BaseGuidelinesClaude", "StructureTemplatePayments", call_claude),
@@ -236,17 +255,24 @@ def main():
             "Responsible Gambling": ("BaseGuidelinesGrok", "StructureTemplateResponsible", call_grok),
         }
 
+        # Get the prompt template from Google Drive
         prompt_template = get_file_content_from_drive(drive_service, GUIDELINES_FOLDER_ID, "PromptTemplate")
         if not prompt_template:
+            st.error("Error: Could not fetch prompt template from Google Drive")
             return
 
         out = [f"{casino} review\n"]
         for sec, content in secs.items():
             guidelines_file, structure_file, fn = section_configs[sec]
+            
+            # Get guidelines and structure from Google Drive
             guidelines = get_file_content_from_drive(drive_service, GUIDELINES_FOLDER_ID, guidelines_file)
             structure = get_file_content_from_drive(drive_service, GUIDELINES_FOLDER_ID, structure_file)
+            
             if not guidelines or not structure:
+                st.error(f"Error: Could not fetch required files for section {sec}")
                 continue
+                
             prompt = prompt_template.format(
                 casino=casino,
                 section=sec,
@@ -257,19 +283,26 @@ def main():
                 sim=content["sim"],
                 btc_value=btc_str
             )
+            
             review = fn(prompt)
             out.append(f"{sec}\n{review}\n")
 
         doc_title = f"{casino} Review"
         existing_doc_id = find_existing_doc(drive_service, FOLDER_ID, doc_title)
+
         if existing_doc_id:
+            # Delete the old document
             drive_service.files().delete(fileId=existing_doc_id).execute()
 
-        doc_id = create_google_doc_in_folder(docs_service, drive_service, FOLDER_ID, doc_title, "\n".join(out))
+        doc_id = create_google_doc_in_folder(docs_service, drive_service, FOLDER_ID, f"{casino} Review", "\n".join(out))
         doc_url = f"https://docs.google.com/document/d/{doc_id}"
+        
+        # Write the review link to the spreadsheet
         write_review_link_to_sheet(doc_url)
-
-        st.success("Review complete! Check back in the sheet :)")
+        
+        # Clear the "Writing review" message and show success
+        st.empty()
+        st.success("Review successfully written, check the sheet :)")
 
     except Exception as e:
         st.error(f"❌ An error occurred: {e}")
