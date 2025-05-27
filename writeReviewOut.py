@@ -99,7 +99,7 @@ def call_grok(prompt):
     return j.get("choices", [{}])[0].get("message", {}).get("content", "[Grok failed]").strip()
 
 def call_claude(prompt):
-    return anthropic.messages.create(model="claude-opus-4-20250514", max_tokens=800, temperature=0.5, messages=[{"role": "user", "content": prompt}]).content[0].text.strip()
+    return anthropic.messages.create(model="claude-3-7-sonnet-20250219", max_tokens=800, temperature=0.5, messages=[{"role": "user", "content": prompt}]).content[0].text.strip()
 
 def write_review_link_to_sheet(link):
     """Write the review link to cell B7 in the spreadsheet."""
@@ -186,7 +186,11 @@ def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
 
     doc = docs_service.documents().get(documentId=doc_id).execute()
     header_requests = []
+    bullet_requests = []
     section_titles = ["General", "Payments", "Games", "Responsible Gambling"]
+    
+    # Track if we're in the Responsible Gambling section
+    in_responsible_gambling = False
 
     for element in doc.get('body', {}).get('content', []):
         if 'paragraph' in element:
@@ -197,6 +201,7 @@ def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
                 if 'textRun' in elem
             ).strip()
 
+            # Check if this is a section title
             if paragraph_text in section_titles:
                 # Find the exact start and end from element indexes
                 start_index = element.get('startIndex')
@@ -209,11 +214,50 @@ def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
                             "fields": "bold,fontSize"
                         }
                     })
+                
+                # Track if we're entering the Responsible Gambling section
+                in_responsible_gambling = (paragraph_text == "Responsible Gambling")
+            
+            # Check for bullet points in Responsible Gambling section
+            elif in_responsible_gambling and paragraph_text:
+                # Look for lines that start with bullet point indicators
+                if (paragraph_text.startswith('•') or 
+                    paragraph_text.startswith('-') or 
+                    paragraph_text.startswith('*') or
+                    re.match(r'^\d+\.', paragraph_text.strip())):  # numbered lists
+                    
+                    start_index = element.get('startIndex')
+                    end_index = element.get('endIndex')
+                    if start_index is not None and end_index is not None:
+                        bullet_requests.append({
+                            "updateParagraphStyle": {
+                                "range": {"startIndex": start_index, "endIndex": end_index - 1},
+                                "paragraphStyle": {
+                                    "bullet": {
+                                        "listId": "",
+                                        "nestingLevel": 0
+                                    }
+                                },
+                                "fields": "bullet"
+                            }
+                        })
+                
+                # Reset flag when we hit another section or empty lines indicating section end
+                if paragraph_text in section_titles and paragraph_text != "Responsible Gambling":
+                    in_responsible_gambling = False
 
+    # Apply section headers formatting
     if header_requests:
         docs_service.documents().batchUpdate(
             documentId=doc_id,
             body={"requests": header_requests}
+        ).execute()
+    
+    # Apply bullet point formatting
+    if bullet_requests:
+        docs_service.documents().batchUpdate(
+            documentId=doc_id,
+            body={"requests": bullet_requests}
         ).execute()
 
 # CREATE DOC + FORMATTING
