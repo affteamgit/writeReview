@@ -229,6 +229,25 @@ def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
                     start_index = element.get('startIndex')
                     end_index = element.get('endIndex')
                     if start_index is not None and end_index is not None:
+                        # Clean up the text by removing bullet symbols and extra dashes
+                        cleaned_text = paragraph_text
+                        # Remove leading bullet symbols and dashes
+                        cleaned_text = re.sub(r'^[•\-\*]\s*-?\s*', '', cleaned_text)
+                        cleaned_text = re.sub(r'^\d+\.\s*-?\s*', '', cleaned_text)
+                        
+                        # First replace the text content to remove the symbols
+                        if cleaned_text != paragraph_text and cleaned_text.strip():
+                            bullet_requests.append({
+                                "replaceAllText": {
+                                    "containsText": {
+                                        "text": paragraph_text,
+                                        "matchCase": True
+                                    },
+                                    "replaceText": cleaned_text
+                                }
+                            })
+                        
+                        # Then apply bullet formatting
                         bullet_requests.append({
                             "createParagraphBullets": {
                                 "range": {"startIndex": start_index, "endIndex": end_index - 1},
