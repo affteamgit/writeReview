@@ -273,6 +273,20 @@ def find_existing_doc(drive_service, folder_id, title):
 # MAIN
 def main():
     st.set_page_config(page_title="Review Generator", layout="centered", initial_sidebar_state="collapsed")
+    
+    # Initialize session state to prevent duplicate runs
+    if 'review_completed' not in st.session_state:
+        st.session_state.review_completed = False
+        st.session_state.review_url = None
+    
+    # If review is already completed, show the success message
+    if st.session_state.review_completed:
+        st.success("Review successfully written, check the sheet :)")
+        if st.session_state.review_url:
+            st.info(f"Review link: {st.session_state.review_url}")
+        return
+    
+    # Show the "writing" message only if review hasn't been completed
     st.markdown("## Writing review, please wait...")
 
     try:
@@ -338,12 +352,17 @@ def main():
         # Write the review link to the spreadsheet
         write_review_link_to_sheet(doc_url)
         
-        # Clear the "Writing review" message and show success
-        st.empty()
-        st.success("Review successfully written, check the sheet :)")
+        # Mark review as completed and store the URL
+        st.session_state.review_completed = True
+        st.session_state.review_url = doc_url
+        
+        # Force a rerun to show the success message
+        st.rerun()
 
     except Exception as e:
         st.error(f"❌ An error occurred: {e}")
+        # Reset session state on error so user can try again
+        st.session_state.review_completed = False
 
 if __name__ == "__main__":
     main()
