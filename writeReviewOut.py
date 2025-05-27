@@ -232,7 +232,19 @@ def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
                     # Extract the actual text content
                     cleaned_text = re.sub(r'^[•\-\*\d\.\s]+', '', paragraph_text).strip().lower()
                     
-                    # List of actual responsible gambling tools/features
+                    # First, exclude commentary/descriptive sentences
+                    commentary_phrases = [
+                        'ensuring', 'exceeding expectations', 'give props', 'top-tier',
+                        'this is', 'above average', 'below average', 'comprehensive',
+                        'however', 'overall', 'experience', 'safety for you',
+                        'in conclusion', 'additionally', 'furthermore', 'moreover',
+                        'therefore', 'thus', 'lineup', 'props to'
+                    ]
+                    
+                    # Check if it's commentary (exclude if it contains these phrases)
+                    is_commentary = any(phrase in cleaned_text for phrase in commentary_phrases)
+                    
+                    # List of actual responsible gambling tools/features (only if not commentary)
                     rg_tools = [
                         'deposit limit', 'withdrawal limit', 'loss limit', 'wager limit',
                         'betting limit', 'spending limit', 'session limit', 'time limit',
@@ -247,8 +259,9 @@ def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
                         'deposit freeze', 'account freeze'
                     ]
                     
-                    # Check if the text contains any responsible gambling tool keywords
-                    is_bullet_point = any(tool in cleaned_text for tool in rg_tools)
+                    # Only format as bullet if it contains tool keywords AND is not commentary
+                    contains_tool = any(tool in cleaned_text for tool in rg_tools)
+                    is_bullet_point = contains_tool and not is_commentary
                 
                 if is_bullet_point:
                     
