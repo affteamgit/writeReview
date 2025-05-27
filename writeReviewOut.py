@@ -287,7 +287,7 @@ def main():
             st.info(f"Review link: {st.session_state.review_url}")
         
         # Add a button to generate a new review
-        if st.button("Generate New Review", type="primary"):
+        if st.button("Write Review", type="primary"):
             st.session_state.review_completed = False
             st.session_state.review_url = None
             st.session_state.casino_name = None
@@ -304,11 +304,11 @@ def main():
         return
     
     # Show casino name and generate button
-    st.markdown(f"## Ready to write areview for: **{casino}**")
+    st.markdown(f"## Ready to write a review for: **{casino}**")
     st.markdown("Click the button below to write the review.")
     
     # Only generate review when button is clicked
-    if st.button("Generate Review", type="primary", use_container_width=True):
+    if st.button("Write Review", type="primary", use_container_width=True):
         # Show progress message
         progress_placeholder = st.empty()
         progress_placeholder.markdown("## Writing review, please wait...")
@@ -387,15 +387,6 @@ def main():
             progress_placeholder.empty()
             st.error(f"❌ An error occurred: {e}")
     
-    else:
-        # Show instructions when button hasn't been clicked
-        st.info("💡 The review will only be generated when you click the 'Generate Review' button above.")
-        st.markdown("---")
-        st.markdown("**What happens when you click 'Generate Review':**")
-        st.markdown("1. ✍️ AI will write a comprehensive review")
-        st.markdown("2. 📄 A formatted Google Doc will be created")
-        st.markdown("3. 🔗 The link will be saved to your spreadsheet (cell B7)")
-        st.markdown("4. ✅ You'll see a success message with the link")
 
 if __name__ == "__main__":
     main()
