@@ -220,32 +220,35 @@ def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
             
             # Check for bullet points in Responsible Gambling section
             elif in_responsible_gambling and paragraph_text:
-                # Look for lines that start with bullet point indicators for actual tools/features
-                # Exclude sentences that are clearly commentary or descriptions
+                # Only format as bullet points if it contains actual responsible gambling tool names
                 is_bullet_point = False
                 
-                # Check if it's a proper bullet point (short, tool-like content)
+                # Check if it starts with bullet indicators
                 if (paragraph_text.startswith('•') or 
                     paragraph_text.startswith('-') or 
                     paragraph_text.startswith('*') or
                     re.match(r'^\d+\.', paragraph_text.strip())):
                     
-                    # Additional checks to ensure it's actually a tool/feature, not commentary
-                    cleaned_for_check = re.sub(r'^[•\-\*\d\.\s]+', '', paragraph_text).strip()
+                    # Extract the actual text content
+                    cleaned_text = re.sub(r'^[•\-\*\d\.\s]+', '', paragraph_text).strip().lower()
                     
-                    # Exclude if it contains commentary phrases or is too long/descriptive
-                    commentary_indicators = [
-                        'this is', 'this ensures', 'ensuring', 'experience',
-                        'above average', 'below average', 'comprehensive',
-                        'however', 'overall', 'in conclusion', 'additionally',
-                        'furthermore', 'moreover', 'therefore', 'thus'
+                    # List of actual responsible gambling tools/features
+                    rg_tools = [
+                        'deposit limit', 'withdrawal limit', 'loss limit', 'wager limit',
+                        'betting limit', 'spending limit', 'session limit', 'time limit',
+                        'self-exclusion', 'self exclusion', 'account closure', 'temporary closure',
+                        'cooling-off', 'cooling off', 'timeout', 'take a break',
+                        'reality check', 'pop-up reminder', 'session reminder',
+                        'responsible gambling', 'problem gambling', 'gambling addiction',
+                        'gamcare', 'gamblers anonymous', 'begambleaware',
+                        'gambling therapy', 'gambling help', 'support resources',
+                        'age verification', 'identity verification',
+                        'activity monitoring', 'behavior monitoring',
+                        'deposit freeze', 'account freeze'
                     ]
                     
-                    # Check if it's likely a tool name (short and doesn't contain commentary)
-                    is_commentary = any(indicator in cleaned_for_check.lower() for indicator in commentary_indicators)
-                    is_too_long = len(cleaned_for_check.split()) > 8  # Tools are usually short phrases
-                    
-                    is_bullet_point = not is_commentary and not is_too_long
+                    # Check if the text contains any responsible gambling tool keywords
+                    is_bullet_point = any(tool in cleaned_text for tool in rg_tools)
                 
                 if is_bullet_point:
                     
