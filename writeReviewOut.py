@@ -99,7 +99,7 @@ def call_grok(prompt):
     return j.get("choices", [{}])[0].get("message", {}).get("content", "[Grok failed]").strip()
 
 def call_claude(prompt):
-    return anthropic.messages.create(model="claude-3-7-sonnet-20250219", max_tokens=800, temperature=0.5, messages=[{"role": "user", "content": prompt}]).content[0].text.strip()
+    return anthropic.messages.create(model="claude-opus-4-20250514", max_tokens=800, temperature=0.5, messages=[{"role": "user", "content": prompt}]).content[0].text.strip()
 
 def write_review_link_to_sheet(link):
     """Write the review link to cell B7 in the spreadsheet."""
