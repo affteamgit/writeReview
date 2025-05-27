@@ -230,15 +230,9 @@ def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
                     end_index = element.get('endIndex')
                     if start_index is not None and end_index is not None:
                         bullet_requests.append({
-                            "updateParagraphStyle": {
+                            "createParagraphBullets": {
                                 "range": {"startIndex": start_index, "endIndex": end_index - 1},
-                                "paragraphStyle": {
-                                    "bullet": {
-                                        "listId": "",
-                                        "nestingLevel": 0
-                                    }
-                                },
-                                "fields": "bullet"
+                                "bulletPreset": "BULLET_DISC_CIRCLE_SQUARE"
                             }
                         })
                 
