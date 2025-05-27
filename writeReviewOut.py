@@ -104,9 +104,11 @@ def find_existing_doc(drive_service, folder_id, title):
     return files[0]["id"] if files else None
 
 def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
+    # Parse the text into clean text and extract formatting positions
     plain_text = ""
     formatting_requests = []
-    cursor = 1
+    cursor = 1  # Google Docs uses 1-based index after the title
+
     pattern = r'(\*\*(.*?)\*\*|\[([^\]]+?)\]\((https?://[^\)]+)\))'
     last_end = 0
 
@@ -116,7 +118,7 @@ def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
         plain_text += before_text
         cursor_start = cursor + len(before_text)
 
-        if match.group(2):
+        if match.group(2):  # Bold (**text**)
             bold_text = match.group(2)
             plain_text += bold_text
             formatting_requests.append({
@@ -128,7 +130,7 @@ def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
             })
             cursor += len(before_text) + len(bold_text)
 
-        elif match.group(3) and match.group(4):
+        elif match.group(3) and match.group(4):  # Link [text](url)
             link_text = match.group(3)
             url = match.group(4)
             plain_text += link_text
@@ -146,6 +148,7 @@ def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
     remaining_text = review_text[last_end:]
     plain_text += remaining_text
 
+    #  Insert clean plain text first
     docs_service.documents().batchUpdate(
         documentId=doc_id,
         body={"requests": [{"insertText": {"location": {"index": 1}, "text": plain_text}}]}
@@ -156,22 +159,56 @@ def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
     title_end = title_start + len(title_line)
 
     formatting_requests.insert(0, {
-        "updateParagraphStyle": {
-            "range": {"startIndex": title_start, "endIndex": title_end},
-            "paragraphStyle": {"namedStyleType": "TITLE"},
-            "fields": "namedStyleType"
+    "updateParagraphStyle": {
+        "range": {"startIndex": title_start, "endIndex": title_end},
+        "paragraphStyle": {"namedStyleType": "TITLE"},
+        "fields": "namedStyleType"
         }
     })
 
+    # Apply inline bold & links
     if formatting_requests:
         docs_service.documents().batchUpdate(
             documentId=doc_id,
             body={"requests": formatting_requests}
         ).execute()
 
+    doc = docs_service.documents().get(documentId=doc_id).execute()
+    header_requests = []
+    section_titles = ["General", "Payments", "Games", "Responsible Gambling"]
+
+    for element in doc.get('body', {}).get('content', []):
+        if 'paragraph' in element:
+            paragraph = element['paragraph']
+            paragraph_text = ''.join(
+                elem['textRun']['content']
+                for elem in paragraph.get('elements', [])
+                if 'textRun' in elem
+            ).strip()
+
+            if paragraph_text in section_titles:
+                # Find the exact start and end from element indexes
+                start_index = element.get('startIndex')
+                end_index = element.get('endIndex')
+                if start_index is not None and end_index is not None:
+                    header_requests.append({
+                        "updateTextStyle": {
+                            "range": {"startIndex": start_index, "endIndex": end_index - 1},  # exclude trailing newline
+                            "textStyle": {"bold": True, "fontSize": {"magnitude": 16, "unit": "PT"}},
+                            "fields": "bold,fontSize"
+                        }
+                    })
+
+    if header_requests:
+        docs_service.documents().batchUpdate(
+            documentId=doc_id,
+            body={"requests": header_requests}
+        ).execute()
+
 def create_google_doc_in_folder(docs_service, drive_service, folder_id, doc_title, review_text):
     doc_id = docs_service.documents().create(body={"title": doc_title}).execute()["documentId"]
     insert_parsed_text_with_formatting(docs_service, doc_id, review_text)
+
     file = drive_service.files().get(fileId=doc_id, fields="parents").execute()
     previous_parents = ",".join(file.get('parents', []))
     drive_service.files().update(fileId=doc_id, addParents=folder_id, removeParents=previous_parents, fields="id, parents").execute()
