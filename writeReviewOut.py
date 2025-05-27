@@ -274,95 +274,128 @@ def find_existing_doc(drive_service, folder_id, title):
 def main():
     st.set_page_config(page_title="Review Generator", layout="centered", initial_sidebar_state="collapsed")
     
-    # Initialize session state to prevent duplicate runs
+    # Initialize session state
     if 'review_completed' not in st.session_state:
         st.session_state.review_completed = False
         st.session_state.review_url = None
+        st.session_state.casino_name = None
     
     # If review is already completed, show the success message
     if st.session_state.review_completed:
         st.success("Review successfully written, check the sheet :)")
         if st.session_state.review_url:
             st.info(f"Review link: {st.session_state.review_url}")
+        
+        # Add a button to generate a new review
+        if st.button("Generate New Review", type="primary"):
+            st.session_state.review_completed = False
+            st.session_state.review_url = None
+            st.session_state.casino_name = None
+            st.rerun()
         return
     
-    # Show the "writing" message only if review hasn't been completed
-    st.markdown("## Writing review, please wait...")
-
+    # Get casino name first to show in the interface
     try:
         user_creds = get_service_account_credentials()
-        docs_service = build("docs", "v1", credentials=user_creds)
-        drive_service = build("drive", "v3", credentials=user_creds)
-
-        price = requests.get("https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest", headers={"Accepts": "application/json", "X-CMC_PRO_API_KEY": COINMARKETCAP_API_KEY}, params={"symbol": "BTC", "convert": "USD"}).json().get("data", {}).get("BTC", {}).get("quote", {}).get("USD", {}).get("price")
-        btc_str = f"1 BTC = ${price:,.2f}" if price else "[BTC price unavailable]"
-
-        casino, secs = get_selected_casino_data()
-        
-        # Define section configurations
-        section_configs = {
-            "General": ("BaseGuidelinesClaude", "StructureTemplateGeneral", call_claude),
-            "Payments": ("BaseGuidelinesClaude", "StructureTemplatePayments", call_claude),
-            "Games": ("BaseGuidelinesClaude", "StructureTemplateGames", call_claude),
-            "Responsible Gambling": ("BaseGuidelinesGrok", "StructureTemplateResponsible", call_grok),
-        }
-
-        # Get the prompt template from Google Drive
-        prompt_template = get_file_content_from_drive(drive_service, GUIDELINES_FOLDER_ID, "PromptTemplate")
-        if not prompt_template:
-            st.error("Error: Could not fetch prompt template from Google Drive")
-            return
-
-        out = [f"{casino} review\n"]
-        for sec, content in secs.items():
-            guidelines_file, structure_file, fn = section_configs[sec]
-            
-            # Get guidelines and structure from Google Drive
-            guidelines = get_file_content_from_drive(drive_service, GUIDELINES_FOLDER_ID, guidelines_file)
-            structure = get_file_content_from_drive(drive_service, GUIDELINES_FOLDER_ID, structure_file)
-            
-            if not guidelines or not structure:
-                st.error(f"Error: Could not fetch required files for section {sec}")
-                continue
-                
-            prompt = prompt_template.format(
-                casino=casino,
-                section=sec,
-                guidelines=guidelines,
-                structure=structure,
-                main=content["main"],
-                top=content["top"],
-                sim=content["sim"],
-                btc_value=btc_str
-            )
-            
-            review = fn(prompt)
-            out.append(f"{sec}\n{review}\n")
-
-        doc_title = f"{casino} Review"
-        existing_doc_id = find_existing_doc(drive_service, FOLDER_ID, doc_title)
-
-        if existing_doc_id:
-            # Delete the old document
-            drive_service.files().delete(fileId=existing_doc_id).execute()
-
-        doc_id = create_google_doc_in_folder(docs_service, drive_service, FOLDER_ID, f"{casino} Review", "\n".join(out))
-        doc_url = f"https://docs.google.com/document/d/{doc_id}"
-        
-        # Write the review link to the spreadsheet
-        write_review_link_to_sheet(doc_url)
-        
-        # Mark review as completed and store the URL
-        st.session_state.review_completed = True
-        st.session_state.review_url = doc_url
-        
-        # Force a rerun to show the success message
-        st.rerun()
-
+        casino, _ = get_selected_casino_data()
+        st.session_state.casino_name = casino
     except Exception as e:
-        st.error(f"❌ An error occurred: {e}")
-        # Reset session state on error so user can try again
-        st.session_state.review_completed = False
+        st.error(f"❌ Error loading casino data: {e}")
+        return
+    
+    # Show casino name and generate button
+    st.markdown(f"## Ready to write areview for: **{casino}**")
+    st.markdown("Click the button below to write the review.")
+    
+    # Only generate review when button is clicked
+    if st.button("Generate Review", type="primary", use_container_width=True):
+        # Show progress message
+        progress_placeholder = st.empty()
+        progress_placeholder.markdown("## Writing review, please wait...")
+        
+        try:
+            docs_service = build("docs", "v1", credentials=user_creds)
+            drive_service = build("drive", "v3", credentials=user_creds)
+
+            price = requests.get("https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest", headers={"Accepts": "application/json", "X-CMC_PRO_API_KEY": COINMARKETCAP_API_KEY}, params={"symbol": "BTC", "convert": "USD"}).json().get("data", {}).get("BTC", {}).get("quote", {}).get("USD", {}).get("price")
+            btc_str = f"1 BTC = ${price:,.2f}" if price else "[BTC price unavailable]"
+
+            casino, secs = get_selected_casino_data()
+            
+            # Define section configurations
+            section_configs = {
+                "General": ("BaseGuidelinesClaude", "StructureTemplateGeneral", call_claude),
+                "Payments": ("BaseGuidelinesClaude", "StructureTemplatePayments", call_claude),
+                "Games": ("BaseGuidelinesClaude", "StructureTemplateGames", call_claude),
+                "Responsible Gambling": ("BaseGuidelinesGrok", "StructureTemplateResponsible", call_grok),
+            }
+
+            # Get the prompt template from Google Drive
+            prompt_template = get_file_content_from_drive(drive_service, GUIDELINES_FOLDER_ID, "PromptTemplate")
+            if not prompt_template:
+                st.error("Error: Could not fetch prompt template from Google Drive")
+                return
+
+            out = [f"{casino} review\n"]
+            for sec, content in secs.items():
+                guidelines_file, structure_file, fn = section_configs[sec]
+                
+                # Get guidelines and structure from Google Drive
+                guidelines = get_file_content_from_drive(drive_service, GUIDELINES_FOLDER_ID, guidelines_file)
+                structure = get_file_content_from_drive(drive_service, GUIDELINES_FOLDER_ID, structure_file)
+                
+                if not guidelines or not structure:
+                    st.error(f"Error: Could not fetch required files for section {sec}")
+                    continue
+                    
+                prompt = prompt_template.format(
+                    casino=casino,
+                    section=sec,
+                    guidelines=guidelines,
+                    structure=structure,
+                    main=content["main"],
+                    top=content["top"],
+                    sim=content["sim"],
+                    btc_value=btc_str
+                )
+                
+                review = fn(prompt)
+                out.append(f"{sec}\n{review}\n")
+
+            doc_title = f"{casino} Review"
+            existing_doc_id = find_existing_doc(drive_service, FOLDER_ID, doc_title)
+
+            if existing_doc_id:
+                # Delete the old document
+                drive_service.files().delete(fileId=existing_doc_id).execute()
+
+            doc_id = create_google_doc_in_folder(docs_service, drive_service, FOLDER_ID, f"{casino} Review", "\n".join(out))
+            doc_url = f"https://docs.google.com/document/d/{doc_id}"
+            
+            # Write the review link to the spreadsheet
+            write_review_link_to_sheet(doc_url)
+            
+            # Mark review as completed and store the URL
+            st.session_state.review_completed = True
+            st.session_state.review_url = doc_url
+            
+            # Clear progress message and show success
+            progress_placeholder.empty()
+            st.rerun()
+
+        except Exception as e:
+            progress_placeholder.empty()
+            st.error(f"❌ An error occurred: {e}")
+    
+    else:
+        # Show instructions when button hasn't been clicked
+        st.info("💡 The review will only be generated when you click the 'Generate Review' button above.")
+        st.markdown("---")
+        st.markdown("**What happens when you click 'Generate Review':**")
+        st.markdown("1. ✍️ AI will write a comprehensive review")
+        st.markdown("2. 📄 A formatted Google Doc will be created")
+        st.markdown("3. 🔗 The link will be saved to your spreadsheet (cell B7)")
+        st.markdown("4. ✅ You'll see a success message with the link")
 
 if __name__ == "__main__":
     main()
