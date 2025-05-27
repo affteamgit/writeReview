@@ -220,61 +220,16 @@ def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
             
             # Check for bullet points in Responsible Gambling section
             elif in_responsible_gambling and paragraph_text:
-                # Only format as bullet points if it contains actual responsible gambling tool names
-                is_bullet_point = False
-                
-                # Check if it starts with bullet indicators
-                if (paragraph_text.startswith('•') or 
-                    paragraph_text.startswith('-') or 
-                    paragraph_text.startswith('*') or
-                    re.match(r'^\d+\.', paragraph_text.strip())):
-                    
-                    # Extract the actual text content
-                    cleaned_text = re.sub(r'^[•\-\*\d\.\s]+', '', paragraph_text).strip().lower()
-                    
-                    # First, exclude commentary/descriptive sentences
-                    commentary_phrases = [
-                        'ensuring', 'exceeding expectations', 'give props', 'top-tier',
-                        'this is', 'above average', 'below average', 'comprehensive',
-                        'however', 'overall', 'experience', 'safety for you',
-                        'in conclusion', 'additionally', 'furthermore', 'moreover',
-                        'therefore', 'thus', 'lineup', 'props to'
-                    ]
-                    
-                    # Check if it's commentary (exclude if it contains these phrases)
-                    is_commentary = any(phrase in cleaned_text for phrase in commentary_phrases)
-                    
-                    # List of actual responsible gambling tools/features (only if not commentary)
-                    rg_tools = [
-                        'deposit limit', 'withdrawal limit', 'loss limit', 'wager limit',
-                        'betting limit', 'spending limit', 'session limit', 'time limit',
-                        'self-exclusion', 'self exclusion', 'account closure', 'temporary closure',
-                        'cooling-off', 'cooling off', 'timeout', 'take a break',
-                        'reality check', 'pop-up reminder', 'session reminder',
-                        'responsible gambling', 'problem gambling', 'gambling addiction',
-                        'gamcare', 'gamblers anonymous', 'begambleaware',
-                        'gambling therapy', 'gambling help', 'support resources',
-                        'age verification', 'identity verification',
-                        'activity monitoring', 'behavior monitoring',
-                        'deposit freeze', 'account freeze'
-                    ]
-                    
-                    # Only format as bullet if it contains tool keywords AND is not commentary
-                    contains_tool = any(tool in cleaned_text for tool in rg_tools)
-                    is_bullet_point = contains_tool and not is_commentary
-                
-                if is_bullet_point:
-                    
+                # Simple: format anything that starts with a dash (-) as bullet point
+                if paragraph_text.startswith('-'):
                     start_index = element.get('startIndex')
                     end_index = element.get('endIndex')
                     if start_index is not None and end_index is not None:
-                        # Clean up the text by removing bullet symbols and extra dashes
+                        # Clean up the text by removing the dash
                         cleaned_text = paragraph_text
-                        # Remove leading bullet symbols and dashes
-                        cleaned_text = re.sub(r'^[•\-\*]\s*-?\s*', '', cleaned_text)
-                        cleaned_text = re.sub(r'^\d+\.\s*-?\s*', '', cleaned_text)
+                        cleaned_text = re.sub(r'^-\s*', '', cleaned_text)
                         
-                        # First replace the text content to remove the symbols
+                        # Replace the text content to remove the dash
                         if cleaned_text != paragraph_text and cleaned_text.strip():
                             bullet_requests.append({
                                 "replaceAllText": {
@@ -286,7 +241,7 @@ def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
                                 }
                             })
                         
-                        # Then apply bullet formatting
+                        # Apply bullet formatting
                         bullet_requests.append({
                             "createParagraphBullets": {
                                 "range": {"startIndex": start_index, "endIndex": end_index - 1},
@@ -294,7 +249,7 @@ def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
                             }
                         })
                 
-                # Reset flag when we hit another section or empty lines indicating section end
+                # Reset flag when we hit another section
                 if paragraph_text in section_titles and paragraph_text != "Responsible Gambling":
                     in_responsible_gambling = False
 
