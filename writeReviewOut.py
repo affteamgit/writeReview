@@ -186,11 +186,7 @@ def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
 
     doc = docs_service.documents().get(documentId=doc_id).execute()
     header_requests = []
-    bullet_requests = []
     section_titles = ["General", "Payments", "Games", "Responsible Gambling"]
-    
-    # Track if we're in the Responsible Gambling section
-    in_responsible_gambling = False
 
     for element in doc.get('body', {}).get('content', []):
         if 'paragraph' in element:
@@ -214,57 +210,12 @@ def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
                             "fields": "bold,fontSize"
                         }
                     })
-                
-                # Track if we're entering the Responsible Gambling section
-                in_responsible_gambling = (paragraph_text == "Responsible Gambling")
-            
-            # Check for bullet points in Responsible Gambling section
-            elif in_responsible_gambling and paragraph_text:
-                # Simple: format anything that starts with a dash (-) as bullet point
-                if paragraph_text.startswith('-'):
-                    start_index = element.get('startIndex')
-                    end_index = element.get('endIndex')
-                    if start_index is not None and end_index is not None:
-                        # Clean up the text by removing the dash
-                        cleaned_text = paragraph_text
-                        cleaned_text = re.sub(r'^-\s*', '', cleaned_text)
-                        
-                        # Replace the text content to remove the dash
-                        if cleaned_text != paragraph_text and cleaned_text.strip():
-                            bullet_requests.append({
-                                "replaceAllText": {
-                                    "containsText": {
-                                        "text": paragraph_text,
-                                        "matchCase": True
-                                    },
-                                    "replaceText": cleaned_text
-                                }
-                            })
-                        
-                        # Apply bullet formatting
-                        bullet_requests.append({
-                            "createParagraphBullets": {
-                                "range": {"startIndex": start_index, "endIndex": end_index - 1},
-                                "bulletPreset": "BULLET_DISC_CIRCLE_SQUARE"
-                            }
-                        })
-                
-                # Reset flag when we hit another section
-                if paragraph_text in section_titles and paragraph_text != "Responsible Gambling":
-                    in_responsible_gambling = False
 
     # Apply section headers formatting
     if header_requests:
         docs_service.documents().batchUpdate(
             documentId=doc_id,
             body={"requests": header_requests}
-        ).execute()
-    
-    # Apply bullet point formatting
-    if bullet_requests:
-        docs_service.documents().batchUpdate(
-            documentId=doc_id,
-            body={"requests": bullet_requests}
         ).execute()
 
 # CREATE DOC + FORMATTING
