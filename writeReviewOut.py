@@ -115,6 +115,8 @@ def write_review_link_to_sheet(link):
 
 # FORMATTED INSERTION (CLEAN)
 def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
+    import re
+
     # Parse the text into clean text and extract formatting positions
     plain_text = ""
     formatting_requests = []
@@ -159,7 +161,7 @@ def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
     remaining_text = review_text[last_end:]
     plain_text += remaining_text
 
-    #  Insert clean plain text first
+    # Insert clean plain text
     docs_service.documents().batchUpdate(
         documentId=doc_id,
         body={"requests": [{"insertText": {"location": {"index": 1}, "text": plain_text}}]}
@@ -170,10 +172,10 @@ def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
     title_end = title_start + len(title_line)
 
     formatting_requests.insert(0, {
-    "updateParagraphStyle": {
-        "range": {"startIndex": title_start, "endIndex": title_end},
-        "paragraphStyle": {"namedStyleType": "TITLE"},
-        "fields": "namedStyleType"
+        "updateParagraphStyle": {
+            "range": {"startIndex": title_start, "endIndex": title_end},
+            "paragraphStyle": {"namedStyleType": "TITLE"},
+            "fields": "namedStyleType"
         }
     })
 
@@ -186,9 +188,16 @@ def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
 
     doc = docs_service.documents().get(documentId=doc_id).execute()
     header_requests = []
-    section_titles = ["General", "Payments", "Games", "Responsible Gambling"]
+    bullet_requests = []
 
-    for element in doc.get('body', {}).get('content', []):
+    section_titles = ["General", "Payments", "Games", "Responsible Gambling"]
+    rg_start = None
+    rg_end = None
+
+    content = doc.get('body', {}).get('content', [])
+
+    # Identify Responsible Gambling section range
+    for idx, element in enumerate(content):
         if 'paragraph' in element:
             paragraph = element['paragraph']
             paragraph_text = ''.join(
@@ -197,25 +206,61 @@ def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
                 if 'textRun' in elem
             ).strip()
 
-            # Check if this is a section title
+            start_index = element.get('startIndex')
+            end_index = element.get('endIndex')
+
             if paragraph_text in section_titles:
-                # Find the exact start and end from element indexes
-                start_index = element.get('startIndex')
-                end_index = element.get('endIndex')
+                if paragraph_text == "Responsible Gambling":
+                    rg_start = end_index
+                elif rg_start and not rg_end:
+                    rg_end = start_index
+
                 if start_index is not None and end_index is not None:
                     header_requests.append({
                         "updateTextStyle": {
-                            "range": {"startIndex": start_index, "endIndex": end_index - 1},  # exclude trailing newline
+                            "range": {"startIndex": start_index, "endIndex": end_index - 1},
                             "textStyle": {"bold": True, "fontSize": {"magnitude": 16, "unit": "PT"}},
                             "fields": "bold,fontSize"
                         }
                     })
 
-    # Apply section headers formatting
+    # Look for "- " lines in Responsible Gambling and convert to bullets
+    for element in content:
+        if 'paragraph' not in element:
+            continue
+        start_index = element.get('startIndex')
+        end_index = element.get('endIndex')
+        if not start_index or not end_index:
+            continue
+
+        # Must be within Responsible Gambling section
+        if rg_start and rg_end and not (rg_start < start_index < rg_end):
+            continue
+
+        paragraph_text = ''.join(
+            e['textRun']['content']
+            for e in element['paragraph']['elements']
+            if 'textRun' in e
+        ).strip()
+
+        if paragraph_text.startswith("- "):
+            bullet_requests.append({
+                "createParagraphBullets": {
+                    "range": {"startIndex": start_index, "endIndex": end_index - 1},
+                    "bulletPreset": "BULLET_DISC"
+                }
+            })
+
     if header_requests:
         docs_service.documents().batchUpdate(
             documentId=doc_id,
             body={"requests": header_requests}
+        ).execute()
+
+    if bullet_requests:
+        docs_service.documents().batchUpdate(
+            documentId=doc_id,
+            body={"requests": bullet_requests}
         ).execute()
 
 # CREATE DOC + FORMATTING
