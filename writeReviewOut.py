@@ -247,7 +247,7 @@ def insert_parsed_text_with_formatting(docs_service, doc_id, review_text):
             bullet_requests.append({
                 "createParagraphBullets": {
                     "range": {"startIndex": start_index, "endIndex": end_index - 1},
-                    "bulletPreset": "BULLET_DISC"
+                    "bulletPreset": "BULLET_DISC_CIRCLE"
                 }
             })
 
