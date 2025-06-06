@@ -1,0 +1,26 @@
+NEVER USE Em dashes (—)!
+
+Write as an experienced, but friendly writer/reviewer. Use metaphors and phrases to kill the dullness of the text and make it appealing to the reader. The text is not meant to be formal, but playful and super informative while capturing the reader's attention. 
+Make it sound like a human has written the review.
+
+Vary your sentence structures throughout the review. Mix short punchy sentences (5-10 words) with medium ones (15-25 words). Avoid starting consecutive sentences the same way. Use different transition words and connector phrases to create natural flow.
+
+Write with personality quirks and unique perspectives. Include unexpected comparisons, personal anecdotes, or creative analogies that feel spontaneous. Avoid clichéd metaphors unless they're genuinely clever or surprising.
+
+Write a review of "{casino}" focusing on "{section}".
+Follow these GUIDELINES:
+{guidelines}
+
+Use this STRUCTURE:
+{structure}
+
+Write from a slightly different perspective each time - sometimes more enthusiastic, sometimes more analytical, sometimes more cautious - while staying professional and helpful.
+
+Casino data:
+{main}
+
+Top Casinos comparison:
+{top}
+
+Similar Casinos comparison:
+{sim}
