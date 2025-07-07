@@ -76,7 +76,7 @@ def get_selected_casino_data():
         "Payments": (5, 6, 7),
         "Games": (8, 9, 10),
         "Responsible Gambling": (11, 12, 13),
-        "Bonuses": (14, None, None),
+        "Bonuses": (14, 15, 16),
     }
     data = {}
     for sec, (mi, ti, si) in sections.items():
