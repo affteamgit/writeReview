@@ -70,19 +70,26 @@ def get_selected_casino_data():
     creds = get_service_account_credentials()
     sheets = build("sheets", "v4", credentials=creds)
     casino = sheets.spreadsheets().values().get(spreadsheetId=SPREADSHEET_ID, range=f"{SHEET_NAME}!B1").execute().get("values", [[""]])[0][0].strip()
-    rows = sheets.spreadsheets().values().get(spreadsheetId=SPREADSHEET_ID, range=f"{SHEET_NAME}!B2:O").execute().get("values", [])
+    rows = sheets.spreadsheets().values().get(spreadsheetId=SPREADSHEET_ID, range=f"{SHEET_NAME}!B2:P").execute().get("values", [])
     sections = {
         "General": (2, 3, 4),
         "Payments": (5, 6, 7),
         "Games": (8, 9, 10),
         "Responsible Gambling": (11, 12, 13),
+        "Bonuses": (14, None, None),
     }
     data = {}
     for sec, (mi, ti, si) in sections.items():
         main = "\n".join(r[mi] for r in rows if len(r) > mi and r[mi].strip())
-        top = "\n".join(r[ti] for r in rows if len(r) > ti and r[ti].strip())
-        sim = "\n".join(r[si] for r in rows if len(r) > si and r[si].strip())
-        data[sec] = {"main": main or "[No data provided]", "top": top or "[No top comparison available]", "sim": sim or "[No similar comparison available]"}
+        if ti is not None:
+            top = "\n".join(r[ti] for r in rows if len(r) > ti and r[ti].strip())
+        else:
+            top = "[No top comparison available]"
+        if si is not None:
+            sim = "\n".join(r[si] for r in rows if len(r) > si and r[si].strip())
+        else:
+            sim = "[No similar comparison available]"
+        data[sec] = {"main": main or "[No data provided]", "top": top, "sim": sim}
     return casino, data
 
 # AI CLIENTS
@@ -292,6 +299,7 @@ def main():
                 "Payments": ("BaseGuidelinesClaude", "StructureTemplatePayments", call_claude),
                 "Games": ("BaseGuidelinesClaude", "StructureTemplateGames", call_claude),
                 "Responsible Gambling": ("BaseGuidelinesGrok", "StructureTemplateResponsible", call_grok),
+                "Bonuses": ("BaseGuidelinesClaude", "StructureTemplateBonuses", call_claude),
             }
 
             # Get the prompt template from Google Drive
