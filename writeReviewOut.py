@@ -70,7 +70,7 @@ def get_selected_casino_data():
     creds = get_service_account_credentials()
     sheets = build("sheets", "v4", credentials=creds)
     casino = sheets.spreadsheets().values().get(spreadsheetId=SPREADSHEET_ID, range=f"{SHEET_NAME}!B1").execute().get("values", [[""]])[0][0].strip()
-    rows = sheets.spreadsheets().values().get(spreadsheetId=SPREADSHEET_ID, range=f"{SHEET_NAME}!B2:P").execute().get("values", [])
+    rows = sheets.spreadsheets().values().get(spreadsheetId=SPREADSHEET_ID, range=f"{SHEET_NAME}!B2:R").execute().get("values", [])
     sections = {
         "General": (2, 3, 4),
         "Payments": (5, 6, 7),
