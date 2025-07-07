@@ -1,0 +1,10 @@
+* [Paragraph 1: Welcome Bonus Analysis]: Analyze the casino's welcome bonus package by evaluating each component based on the following criteria (but do not mention the criteria explicitly in the review):
+* First deposit percentage: 100-125% is average, anything below is low, anything above is generous
+* First deposit value: anything below $500 is low, anything above 1.5 BTC or $10k is high and very generous
+* First deposit free spins: 100 is average, anything below is low, anything above is generous
+* Minimum deposit: $10-30 is average, anything below is very player-friendly, anything above is high
+* Wagering requirements: 40x on bonus is average, below 40x is low and player-friendly, above 40x is high and less favorable. If wagering is on bonus+deposit, mention this as typically being higher and less favorable for players
+* No deposit free spins: 20-30 is average, anything below is low, anything above is generous
+For each bonus component, explain how it benefits or affects the reader and why this should matter to them. Use short sentences, maximum 20 words per sentence.
+
+* [Paragraph 2: Overall Bonus Assessment]: Provide a brief overall assessment of the casino's bonus offering. Comment on whether the bonus package is competitive, generous, or could be improved based on the analysis from paragraph 1. Mention any standout features that make the bonus particularly attractive or any areas where players should be cautious. For every point you mention, explain why this should matter to the reader and provide context. Use short sentences, maximum 20 words per sentence.
