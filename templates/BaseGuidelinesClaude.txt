@@ -3,7 +3,7 @@
 - Maintain a professional but conversational tone.
 - ONLY When writing the review for payments and games sections, use commas for grouping numbers by thousands.
 - Address both strengths and weaknesses honestly and respectfully.
-- Wherever you mention vpn friendlyness, anonymous crypto casino, year of establishment, years of experience, number of restricted countries, modern website, number of accepted cryptocurrencies, withdrawal limits values (BTC or USD), withdrawal processing time, KYC verification time, number of games, number of providers, provably fair games, in-house games, game filters bold this feature or phrase using Google Docs formatting (**bold**). Only bold the features - not the whole sentence.
+- Wherever you mention vpn friendlyness, anonymous crypto casino, year of establishment, years of experience, number of restricted countries, modern website, number of accepted cryptocurrencies, withdrawal limits values (BTC or USD), withdrawal processing time, KYC verification time, number of games, number of providers, provably fair games, in-house games, game filters, bonus percentages, bonus amounts, wagering requirements, minimum deposit amounts, free spins numbers bold this feature or phrase using Google Docs formatting (**bold**). Only bold the features - not the whole sentence.
 - When comparing to other casinos, always start the sentence with "In comparison" or "For example", so that it is clear that the reviewed casino is being compared to another casino; always accompany comparisons with values for the compared casino from Top and Similar Casinos columns.
 - Focus on how each feature impacts the user experience or trust.
 - Offer constructive insights, not just opinions.
