@@ -34,35 +34,20 @@ DOCS_DRIVE_SCOPES = ["https://www.googleapis.com/auth/documents", "https://www.g
 def get_service_account_credentials():
     return Credentials.from_service_account_info(st.secrets["service_account"], scopes=SCOPES)
 
-def get_file_content_from_drive(drive_service, folder_id, filename):
-    """Get content of a file from Google Drive folder."""
+def get_file_content_from_github(filename):
+    """Get content of a file from GitHub repository."""
     try:
-        # Search for the file in the specified folder
-        query = f"name = '{filename}' and '{folder_id}' in parents and trashed = false"
-        results = drive_service.files().list(q=query, spaces='drive', fields='files(id, name, mimeType)').execute()
-        files = results.get('files', [])
+        # GitHub raw content URL for the writeReview repository
+        github_base_url = "https://raw.githubusercontent.com/affteamgit/writeReview/main/templates/"
+        file_url = f"{github_base_url}{filename}.txt"
         
-        if not files:
-            raise Exception(f"File {filename} not found in folder")
-            
-        file_id = files[0]['id']
-        mime_type = files[0]['mimeType']
+        response = requests.get(file_url)
+        response.raise_for_status()  # Raise an exception for bad status codes
         
-        # Check if it's a Google Docs file
-        if mime_type in ['application/vnd.google-apps.document', 'application/vnd.google-apps.spreadsheet']:
-            # Export as plain text
-            content = drive_service.files().export(
-                fileId=file_id,
-                mimeType='text/plain'
-            ).execute()
-            return content.decode('utf-8')
-        else:
-            # Download regular file
-            content = drive_service.files().get_media(fileId=file_id).execute()
-            return content.decode('utf-8')
-            
+        return response.text
+        
     except Exception as e:
-        print(f"Error reading file {filename}: {str(e)}")
+        print(f"Error reading file {filename} from GitHub: {str(e)}")
         return None
 
 # GET SHEET
@@ -302,19 +287,19 @@ def main():
                 "Bonuses": ("BaseGuidelinesClaude", "StructureTemplateBonuses", call_claude),
             }
 
-            # Get the prompt template from Google Drive
-            prompt_template = get_file_content_from_drive(drive_service, GUIDELINES_FOLDER_ID, "PromptTemplate")
+            # Get the prompt template from GitHub
+            prompt_template = get_file_content_from_github("PromptTemplate")
             if not prompt_template:
-                st.error("Error: Could not fetch prompt template from Google Drive")
+                st.error("Error: Could not fetch prompt template from GitHub")
                 return
 
             out = [f"{casino} review\n"]
             for sec, content in secs.items():
                 guidelines_file, structure_file, fn = section_configs[sec]
                 
-                # Get guidelines and structure from Google Drive
-                guidelines = get_file_content_from_drive(drive_service, GUIDELINES_FOLDER_ID, guidelines_file)
-                structure = get_file_content_from_drive(drive_service, GUIDELINES_FOLDER_ID, structure_file)
+                # Get guidelines and structure from GitHub
+                guidelines = get_file_content_from_github(guidelines_file)
+                structure = get_file_content_from_github(structure_file)
                 
                 if not guidelines or not structure:
                     st.error(f"Error: Could not fetch required files for section {sec}")
