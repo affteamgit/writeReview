@@ -3,12 +3,12 @@
 **No Deposit Bonuses:**
 * IF casino has no deposit bonuses:
   * IF we have an exclusive no deposit bonus:
-    - Describe our exclusive no deposit bonus in paragraph format, then list terms in bullet points
+    - Describe our exclusive no deposit bonus in paragraph format (without specific terms), then list all terms in bullet points
     - Comment on it using two rating criteria from the bonus data
     - IF we have multiple exclusive no deposit bonuses: Point out this is rare and describe/comment on all
     - IF there's also a standard no deposit bonus: Briefly compare our exclusive to it (how/why exclusive is better/worse) but don't describe standard separately
   * IF we don't have an exclusive no deposit bonus:
-    - Describe the standard no deposit bonus in paragraph format, then list terms in bullet points
+    - Describe the standard no deposit bonus in paragraph format (without specific terms), then list all terms in bullet points
     - Comment on it using two rating criteria from the bonus data
     - IF there are multiple standard no deposit bonuses: Point out this is rare and describe/comment on all
   * IF the no deposit bonus isn't very high (up to 40 free spins) OR has high wagering (over 40x): Recommend another exclusive no deposit from top casinos list
@@ -17,12 +17,12 @@
 **First Deposit Bonuses:**
 * IF casino has first deposit bonuses:
   * IF we have an exclusive first deposit bonus:
-    - Describe our exclusive first deposit bonus in paragraph format, then list terms in bullet points
+    - Describe our exclusive first deposit bonus in paragraph format (without specific terms), then list all terms in bullet points
     - Comment on it using two rating criteria from the bonus data
     - IF we have multiple exclusive first deposit bonuses: Point out this is rare and describe/comment on all
     - IF there are also standard first deposit bonuses: Briefly compare each exclusive to its most similar standard counterpart (how/why exclusive is better/worse) but don't describe standard ones separately
   * IF we don't have an exclusive first deposit bonus:
-    - Describe the standard first deposit bonus in paragraph format, then list terms in bullet points
+    - Describe the standard first deposit bonus in paragraph format (without specific terms), then list all terms in bullet points
     - Comment on it using two rating criteria from the bonus data
     - IF there are multiple standard first deposit bonuses: Point out this is rare and describe/comment on all
   * IF the first deposit doesn't include free spins OR includes very few (less than 50) OR has high wagering (over 40x on bonus, over 40x on deposit, or over 20x on deposit+bonus): Recommend another first deposit from top casinos list
@@ -33,15 +33,17 @@
 
 **Sports Bonuses:**
 * IF casino has sports bonuses: Briefly list them here. No need to comment on them.
+* IF casino doesn't have sports bonuses: Skip this section entirely.
 
 **Faucet Promotions:**
 * IF casino has faucet promotions: List them, mention them as a free way to get money and an interesting way to keep players engaged. No need to comment on them.
+* IF casino doesn't have faucet promotions: Skip this section entirely.
 
 **IF THE CASINO HAS NO BONUSES:**
 * Include the name of the bonus section but don't do anything else
 
 **BONUS DESCRIPTION FORMAT:**
-Always write the bonus in a paragraph, then include the bonus terms in a bullet list.
+Write the bonus in a paragraph without including specific terms (min. deposit, wagering, etc.), then include all bonus terms in a bullet list.
 
 Example format:
 120% up to $500 + 100 free spins first deposit bonus + 5 lottery tickets
@@ -49,7 +51,7 @@ Example format:
 * $10 min. deposit
 * Wagering: 35x on bonus and 40x on free spins
 
-Then comes the comment and anything else.
+Then comes the comment and anything else. Do NOT repeat the bonus terms from the bullet points in the paragraph description.
 
 **BONUS COMMENTING GUIDELINES:**
 Choose two (any two) rating criteria that's mentioned with the bonus and comment on them. If there are less than two criteria mentioned with the bonus, comment on all that are there, and add more from the average criteria to comment on two things altogether.
