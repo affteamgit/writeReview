@@ -1,6 +1,5 @@
 **IF THE CASINO HAS BONUSES:**
 
-**No Deposit Bonuses:**
 * IF casino has no deposit bonuses:
   * IF we have an exclusive no deposit bonus:
     - Describe our exclusive no deposit bonus in paragraph format (general nature only - no percentages, amounts, wagering, etc.), then list all specific details in bullet points
@@ -14,7 +13,6 @@
   * IF the no deposit bonus isn't very high (up to 40 free spins) OR has high wagering (over 40x): Recommend another exclusive no deposit from top casinos list
 * IF casino doesn't have no deposit bonus: Mention this and recommend another top casino from spreadsheet (only do this 30% of the time, not every review)
 
-**First Deposit Bonuses:**
 * IF casino has first deposit bonuses:
   * IF we have an exclusive first deposit bonus:
     - Describe our exclusive first deposit bonus in paragraph format (general nature only - no percentages, amounts, wagering, etc.), then list all specific details in bullet points
@@ -31,13 +29,11 @@
   * IF it has other exclusives or unique bonuses (not no deposit or first deposit): Describe and comment on them all here. Include comment if such bonus is better/worse than having a first deposit match bonus and why.
   * IF it doesn't have any other exclusives or unique bonuses: Say there are no welcome deposit casino bonuses and recommend one of the top first deposit casinos instead.
 
-**Sports Bonuses:**
 * IF casino has sports bonuses: Briefly list them here. No need to comment on them.
-* IF casino doesn't have sports bonuses: Skip this section entirely.
+* IF casino doesn't have sports bonuses: DO NOT include this section at all.
 
-**Faucet Promotions:**
 * IF casino has faucet promotions: List them, mention them as a free way to get money and an interesting way to keep players engaged. No need to comment on them.
-* IF casino doesn't have faucet promotions: Skip this section entirely.
+* IF casino doesn't have faucet promotions: DO NOT include this section at all.
 
 **IF THE CASINO HAS NO BONUSES:**
 * Include the name of the bonus section but don't do anything else
