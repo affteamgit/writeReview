@@ -13,7 +13,6 @@ import re
 # CONFIG 
 
 OPENAI_API_KEY      = st.secrets["OPENAI_API_KEY"]
-GROK_API_KEY        = st.secrets["GROK_API_KEY"]
 ANTHROPIC_API_KEY   = st.secrets["ANTHROPIC_API_KEY"]
 COINMARKETCAP_API_KEY = st.secrets["COINMARKETCAP_API_KEY"]
 
@@ -84,14 +83,8 @@ anthropic = Anthropic(api_key=ANTHROPIC_API_KEY)
 def call_openai(prompt):
     return client.chat.completions.create(model="gpt-4o", messages=[{"role": "user", "content": prompt}], temperature=0.5, max_tokens=800).choices[0].message.content.strip()
 
-def call_grok(prompt):
-    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {GROK_API_KEY}"}
-    payload = {"model": "grok-3", "messages": [{"role": "user", "content": prompt}], "temperature": 0.5, "max_tokens": 800}
-    j = requests.post("https://api.x.ai/v1/chat/completions", json=payload, headers=headers).json()
-    return j.get("choices", [{}])[0].get("message", {}).get("content", "[Grok failed]").strip()
-
 def call_claude(prompt):
-    return anthropic.messages.create(model="claude-sonnet-4-20250514", max_tokens=800, temperature=0.5, messages=[{"role": "user", "content": prompt}]).content[0].text.strip()
+    return anthropic.messages.create(model="claude-sonnet-5", max_tokens=800, messages=[{"role": "user", "content": prompt}]).content[0].text.strip()
 
 def write_review_link_to_sheet(link):
     """Write the review link to cell B7 in the spreadsheet."""
@@ -299,7 +292,7 @@ def main():
                 "General": ("BaseGuidelinesClaude", "StructureTemplateGeneral", call_claude),
                 "Payments": ("BaseGuidelinesClaude", "StructureTemplatePayments", call_claude),
                 "Games": ("BaseGuidelinesClaude", "StructureTemplateGames", call_claude),
-                "Responsible Gambling": ("BaseGuidelinesGrok", "StructureTemplateResponsible", call_grok),
+                "Responsible Gambling": ("BaseGuidelinesResponsible", "StructureTemplateResponsible", call_claude),
                 "Bonuses": ("BaseGuidelinesClaude", "StructureTemplateBonuses", call_claude),
             }
 
