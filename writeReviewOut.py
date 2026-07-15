@@ -75,7 +75,7 @@ def get_selected_casino_data():
         else:
             sim = "[No similar comparison available]"
         data[sec] = {"main": main or "[No data provided]", "top": top, "sim": sim}
-    return casino, data
+    return casino, data, rows
 
 # AI CLIENTS
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
@@ -253,15 +253,31 @@ def main():
     # Get casino name first to show in the interface
     try:
         user_creds = get_service_account_credentials()
-        casino, _ = get_selected_casino_data()
+        casino, sheet_data, sheet_rows = get_selected_casino_data()
         st.session_state.casino_name = casino
     except Exception as e:
         st.error(f"❌ Error loading casino data: {e}")
         return
-    
+
     # Show casino name and generate button
     st.markdown(f"## Ready to write a review for: **{casino}**")
     st.markdown("Click the button below to write the review.")
+
+    # TEMP DEBUG - remove once the data pipeline is confirmed healthy
+    with st.expander("🔍 Debug: raw data pulled from the sheet"):
+        st.write(f"Sheet tab (`SHEET_NAME`): `{SHEET_NAME}`")
+        st.write(f"Spreadsheet ID ends in: `...{SPREADSHEET_ID[-6:]}`")
+        st.write(f"Casino name read from `B1`: `{casino}`")
+        st.write(f"Rows returned from `{SHEET_NAME}!B2:R`: **{len(sheet_rows)}**")
+        if sheet_rows:
+            st.write("First 3 raw rows (columns B → R, in order):")
+            st.write(sheet_rows[:3])
+        else:
+            st.warning("No rows came back at all from B2:R — the tab is empty, wrong, or the range doesn't match the sheet layout.")
+        st.write("Parsed per-section data (this is exactly what gets sent to the AI):")
+        for sec, content in sheet_data.items():
+            st.markdown(f"**{sec}**")
+            st.write({k: (v[:300] + "…") if len(v) > 300 else v for k, v in content.items()})
     
     # Only generate review when button is clicked
     if st.button("Write Review", type="primary", use_container_width=True):
@@ -276,7 +292,7 @@ def main():
             price = requests.get("https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest", headers={"Accepts": "application/json", "X-CMC_PRO_API_KEY": COINMARKETCAP_API_KEY}, params={"symbol": "BTC", "convert": "USD"}).json().get("data", {}).get("BTC", {}).get("quote", {}).get("USD", {}).get("price")
             btc_str = f"1 BTC = ${price:,.2f}" if price else "[BTC price unavailable]"
 
-            casino, secs = get_selected_casino_data()
+            casino, secs, _ = get_selected_casino_data()
             
             # Define section configurations
             section_configs = {
